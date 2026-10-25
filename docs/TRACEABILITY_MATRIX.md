@@ -9,6 +9,7 @@
 - `SPECIFIED`: các nguồn chính đang đủ nhất quán để làm baseline.
 - `INCONSISTENT`: có conflict mở; không được tự chọn một phía để triển khai.
 - Cột `Database (LOCKED)` được khóa theo `docs/DATABASE_BASELINE.md` và các quyết định DB-DECISION-01..09. Việc khóa cột Database không thay đổi trạng thái nghiệp vụ; API, Service, Repository, UI và Test vẫn là `TODO`.
+- Backend foundation BƯỚC 4: `PARTIAL — COMPILE/TEST/NON-DB STARTUP PASS; MYSQL/JPA/FLYWAY RUNTIME NOT VERIFIED`. Ghi chú infrastructure này không đánh dấu bất kỳ FR nghiệp vụ nào là DONE.
 
 | Requirement | Business Rule | Use Case | Activity Diagram | Actor | Database (LOCKED) | API | Service | Repository | UI | Test | Status |
 |---|---|---|---|---|---|---|---|---|---|---|---|
