@@ -1,5 +1,21 @@
 # TASK 002 Database Baseline
 
+## Cập nhật quyết định database đã phê duyệt
+
+Ngày cập nhật: 2026-10-25.
+
+1. `DB-DECISION-01: A` — toàn bộ PK/FK dùng `BIGINT`.
+2. `DB-DECISION-02: A` — `sales_orders.customer_id` cho phép NULL.
+3. `DB-DECISION-03: A` — không tạo `invoice_details`.
+4. `DB-DECISION-04: A` — không tạo session/login log và không thêm field khóa phiên.
+5. `DB-DECISION-05: A` — chỉ dùng `stock_transactions` cho lịch sử kho.
+6. `DB-DECISION-06: A` — không thêm field chỉ có trong Processing Design.
+7. `DB-DECISION-07: B` — thêm UNIQUE `(purchase_receipt_id, product_id)`.
+8. `DB-DECISION-08: A` — chưa thêm UNIQUE cho phone/email khách hàng.
+9. `DB-DECISION-09: B` — vô hiệu hóa tài khoản qua `users.status`, không DELETE vật lý.
+
+Phạm vi thực hiện sau quyết định: khóa đúng 11 bảng MySQL, tạo `docs/DATABASE_BASELINE.md`, `database/schema.sql`, `database/seed.sql`, `database/README.md`, cập nhật cột Database trong traceability matrix; không tạo backend, frontend hoặc API.
+
 ## Mục tiêu
 
 Phân tích và khóa một database baseline vật lý duy nhất cho hệ thống quản lý bán hàng, chỉ khi mọi quyết định ảnh hưởng schema đã được xác định chắc chắn từ source document hoặc được người dùng xác nhận.
@@ -34,7 +50,7 @@ Tài liệu Word chỉ được đọc để đối chiếu; không sửa, đổ
 
 ## Các bảng liên quan
 
-Database baseline dự kiến có đúng 11 bảng, chờ kết quả phân tích conflict:
+Database baseline đã khóa có đúng 11 bảng theo 9 database decision được người dùng xác nhận:
 
 1. `users`
 2. `categories`
@@ -71,7 +87,7 @@ Không tự thêm bảng thứ 12.
 - Nếu có blocking conflict chưa được quyết định: chỉ tạo `docs/DB_CONFLICT_DECISIONS_REQUIRED.md` và dừng trước schema.
 - Nếu không còn blocking conflict: tạo `database/schema.sql`, `database/seed.sql`, `database/README.md`, `docs/DATABASE_BASELINE.md` và cập nhật cột Database trong `docs/TRACEABILITY_MATRIX.md`.
 
-## File dự kiến thay đổi
+## File thay đổi
 
 - `docs/change-plans/TASK-002-database-baseline.md`
 - `docs/DB_CONFLICT_DECISIONS_REQUIRED.md` nếu bị chặn
@@ -95,7 +111,7 @@ NONE tại BƯỚC 3.
 
 ## Database Impact
 
-Chưa thực hiện. Không tạo schema cho đến khi hoàn tất Impact Analysis và không còn blocking database conflict chưa được người dùng quyết định.
+Đã thực hiện Impact Analysis và đã nhận đủ 9 database decision. Tạo baseline MySQL đúng 11 bảng; không tạo bảng thứ 12 và không dùng thao tác destructive.
 
 ## Backend Impact
 
@@ -139,12 +155,15 @@ NONE.
 
 ## Kết quả
 
-`BLOCKED — DATABASE DECISION REQUIRED`
+`COMPLETED — DATABASE BASELINE LOCKED`
 
 - Đã đối chiếu trực tiếp source Word, REPORT_BASELINE, TRACEABILITY_MATRIX và KNOWN_INCONSISTENCIES.
 - Đã xác minh baseline chính có đúng 11 bảng.
 - Đã phân loại toàn bộ 20 known inconsistencies theo ảnh hưởng database.
-- Đã xác định blocking conflict về datatype ID, nullability của `sales_orders.customer_id`, các bảng/field ngoài baseline trong Processing Design, UNIQUE cho dữ liệu trùng và chiến lược xóa tài khoản.
+- Đã giải quyết conflict về datatype ID, nullability của `sales_orders.customer_id`, các bảng/field ngoài baseline trong Processing Design, UNIQUE cho dữ liệu trùng và chiến lược xóa tài khoản theo quyết định người dùng.
 - Đã tạo `docs/DB_CONFLICT_DECISIONS_REQUIRED.md` với các phương án và tác động.
-- Không tạo schema, seed, database README hoặc DATABASE_BASELINE khi chưa có quyết định của người dùng.
+- Đã tạo schema, seed, database README và DATABASE_BASELINE sau khi nhận đủ quyết định của người dùng.
+- Static verification: 11/11 table, 11/11 PK, 14/14 FK, 9/9 UNIQUE; nullability và relationship khớp baseline.
+- MySQL runtime: `NOT VERIFIED — MYSQL ENVIRONMENT NOT AVAILABLE`.
+- Traceability: cột Database đã khóa; API, Service, Repository, UI và Test vẫn là `TODO`.
 - Backend impact, API impact và UI impact: `NONE`.

@@ -2,9 +2,27 @@
 
 ## Trạng thái
 
-`BLOCKING DATABASE CONFLICT`
+`RESOLVED — DATABASE BASELINE MAY PROCEED`
 
-Không được tạo `database/schema.sql`, `database/seed.sql`, `database/README.md` hoặc khóa `docs/DATABASE_BASELINE.md` cho đến khi người dùng xác nhận các quyết định blocking trong tài liệu này.
+## Resolution register
+
+Các quyết định dưới đây đã được người dùng xác nhận ngày 2026-10-25 và là căn cứ khóa database baseline:
+
+| Decision | Selection | Resolution | Status |
+|---|---|---|---|
+| DB-DECISION-01 | A | Toàn bộ PK/FK dùng `BIGINT`. | RESOLVED |
+| DB-DECISION-02 | A | `sales_orders.customer_id` cho phép NULL. | RESOLVED |
+| DB-DECISION-03 | A | Không tạo `invoice_details`; dùng `order_details`. | RESOLVED |
+| DB-DECISION-04 | A | Không tạo `login_sessions`, `login_logs` hoặc field khóa phiên. | RESOLVED |
+| DB-DECISION-05 | A | Chỉ dùng `stock_transactions` cho lịch sử kho. | RESOLVED |
+| DB-DECISION-06 | A | Không thêm field chỉ xuất hiện trong Processing Design. | RESOLVED |
+| DB-DECISION-07 | B | UNIQUE `(purchase_receipt_id, product_id)`. | RESOLVED |
+| DB-DECISION-08 | A | Chưa thêm UNIQUE cho `customers.phone`/`email`. | RESOLVED |
+| DB-DECISION-09 | B | Không DELETE vật lý user; vô hiệu hóa qua `users.status`. | RESOLVED |
+
+Các phần mô tả conflict và phương án bên dưới được giữ lại làm audit trail. Mọi dòng yêu cầu xác nhận trong phần lịch sử được thay thế bởi Resolution register này.
+
+Người dùng đã xác nhận đầy đủ các quyết định blocking; `database/schema.sql`, `database/seed.sql`, `database/README.md` và `docs/DATABASE_BASELINE.md` được phép tạo theo Resolution register.
 
 Source document đã được đối chiếu read-only với SHA-256:
 
@@ -80,7 +98,7 @@ Các kết luận trên không cho phép bỏ qua conflict ở Processing Design
 
 **KHUYẾN NGHỊ:** Phương án A (`BIGINT`) vì được thể hiện ở ERD và toàn bộ bảng cấu trúc chi tiết, nhưng không được áp dụng khi chưa có xác nhận.
 
-**QUYẾT ĐỊNH CẦN NGƯỜI DÙNG XÁC NHẬN:** Chọn `BIGINT` hay `INT` cho tất cả PK/FK.
+**RESOLVED — DB-DECISION-01: A:** Dùng `BIGINT` cho tất cả PK/FK.
 
 ## Quyết định 2 sales_orders customer_id và khách mua lẻ
 
@@ -100,7 +118,7 @@ Các kết luận trên không cho phép bỏ qua conflict ở Processing Design
 
 **KHUYẾN NGHỊ:** Phương án A (NULL) để khớp rule khách mua lẻ và tránh tự tạo customer mặc định.
 
-**QUYẾT ĐỊNH CẦN NGƯỜI DÙNG XÁC NHẬN:** Chọn NULL hay NOT NULL và xác nhận cách biểu diễn khách lẻ.
+**RESOLVED — DB-DECISION-02: A:** `sales_orders.customer_id` cho phép NULL để biểu diễn khách lẻ.
 
 ## Quyết định 3 invoice_details
 
@@ -120,7 +138,7 @@ Các kết luận trên không cho phép bỏ qua conflict ở Processing Design
 
 **KHUYẾN NGHỊ:** Phương án A; không thêm bảng ngoài baseline 11 bảng.
 
-**QUYẾT ĐỊNH CẦN NGƯỜI DÙNG XÁC NHẬN:** Xác nhận bỏ `invoice_details` khỏi schema hay mở change request sửa toàn bộ tài liệu.
+**RESOLVED — DB-DECISION-03: A:** Không tạo `invoice_details`.
 
 ## Quyết định 4 login sessions và login logs
 
@@ -140,7 +158,7 @@ Các kết luận trên không cho phép bỏ qua conflict ở Processing Design
 
 **KHUYẾN NGHỊ:** Phương án A; không thêm `login_sessions`, `login_logs` hoặc field chưa thuộc baseline.
 
-**QUYẾT ĐỊNH CẦN NGƯỜI DÙNG XÁC NHẬN:** Giữ strict 11-table baseline hay mở change request cho session/login audit.
+**RESOLVED — DB-DECISION-04: A:** Không tạo session/login audit table hoặc field khóa phiên.
 
 ## Quyết định 5 stock_transactions hay stock_histories THE_KHO
 
@@ -160,7 +178,7 @@ Các kết luận trên không cho phép bỏ qua conflict ở Processing Design
 
 **KHUYẾN NGHỊ:** Phương án A vì `stock_transactions` đã đủ dữ liệu cho nhập, bán, xuất, điều chỉnh và kiểm kê.
 
-**QUYẾT ĐỊNH CẦN NGƯỜI DÙNG XÁC NHẬN:** Xác nhận `stock_transactions` là bảng lịch sử kho duy nhất.
+**RESOLVED — DB-DECISION-05: A:** `stock_transactions` là bảng lịch sử kho duy nhất.
 
 ## Quyết định 6 Các field nghiệp vụ chỉ có trong Processing Design
 
@@ -180,7 +198,7 @@ Các kết luận trên không cho phép bỏ qua conflict ở Processing Design
 
 **KHUYẾN NGHỊ:** Phương án A tại baseline hiện tại.
 
-**QUYẾT ĐỊNH CẦN NGƯỜI DÙNG XÁC NHẬN:** Xác nhận loại khỏi schema BƯỚC 3 hay cung cấp change request cụ thể cho từng field.
+**RESOLVED — DB-DECISION-06: A:** Không thêm các field chỉ xuất hiện trong Processing Design.
 
 ## Quyết định 7 Xử lý sản phẩm trùng trong một phiếu nhập
 
@@ -200,7 +218,7 @@ Các kết luận trên không cho phép bỏ qua conflict ở Processing Design
 
 **KHUYẾN NGHỊ:** Cần người dùng chọn; không thể tự thêm hoặc bỏ composite UNIQUE.
 
-**QUYẾT ĐỊNH CẦN NGƯỜI DÙNG XÁC NHẬN:** Chọn gộp hay cấm trùng.
+**RESOLVED — DB-DECISION-07: B:** Cấm trùng bằng UNIQUE `(purchase_receipt_id, product_id)` và Service validation sau này.
 
 ## Quyết định 8 Tiêu chí chống trùng khách hàng
 
@@ -220,7 +238,7 @@ Các kết luận trên không cho phép bỏ qua conflict ở Processing Design
 
 **KHUYẾN NGHỊ:** Người dùng phải xác định tiêu chí trước; không tự thêm UNIQUE.
 
-**QUYẾT ĐỊNH CẦN NGƯỜI DÙNG XÁC NHẬN:** Chọn field/tổ hợp chống trùng và chính sách NULL, hoặc xác nhận chỉ kiểm tra ở Service.
+**RESOLVED — DB-DECISION-08: A:** Chưa thêm UNIQUE cho phone/email; Service xử lý sau khi rule được chốt.
 
 ## Quyết định 9 Xóa tài khoản vật lý hay thay đổi status
 
@@ -240,7 +258,7 @@ Các kết luận trên không cho phép bỏ qua conflict ở Processing Design
 
 **KHUYẾN NGHỊ:** Phương án B về an toàn/audit, nhưng đây là thay đổi Business Rule nếu chưa được xác nhận.
 
-**QUYẾT ĐỊNH CẦN NGƯỜI DÙNG XÁC NHẬN:** Chọn xóa vật lý có điều kiện hay thay đổi status.
+**RESOLVED — DB-DECISION-09: B:** Không DELETE vật lý; vô hiệu hóa qua `users.status`.
 
 ## Các kiểm tra đặc biệt không tạo thêm decision
 
@@ -252,4 +270,4 @@ Các kết luận trên không cho phép bỏ qua conflict ở Processing Design
 
 ## Trạng thái quyết định
 
-`OPEN — REQUIRE USER DECISION`
+`RESOLVED — ALL DATABASE DECISIONS CONFIRMED`
