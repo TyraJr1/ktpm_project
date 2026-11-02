@@ -72,26 +72,49 @@ try {
 
   await login('admin01');
   await page.waitForURL('**/admin/dashboard');
-  await expect(await page.getByText('Xin chào, Quản trị viên').isVisible(), 'Professional Admin greeting missing.');
+  await expect(await page.getByText('Xin chào, Quản trị viên').isVisible(), 'Admin greeting missing.');
   await expect(await page.getByText('Quản trị viên', { exact: true }).first().isVisible(), 'Friendly Admin role missing.');
-  await expect(await page.getByText('2.450.000 ₫').isVisible(), 'Revenue KPI missing.');
-  await expect(await page.getByRole('heading', { name: 'Doanh thu 7 ngày' }).isVisible(), 'Revenue chart missing.');
-  await expect(await page.getByRole('heading', { name: 'Sản phẩm bán chạy' }).isVisible(), 'Top products missing.');
-  await expect(await page.getByRole('heading', { name: 'Cảnh báo tồn kho' }).isVisible(), 'Low-stock panel missing.');
+  await page.waitForFunction(() => ['categories', 'products', 'suppliers', 'inventory', 'invoices', 'accounts']
+    .every((key) => document.querySelector(`#dashboard-${key}`)?.textContent !== '—'));
+  await expect(await page.getByText('Không sử dụng dữ liệu mẫu hoặc số liệu ước tính').isVisible(), 'Database-backed scope message missing.');
+  const dashboardText = await page.locator('body').innerText();
+  await expect(!dashboardText.includes('Doanh thu 7 ngày') && !dashboardText.includes('Sản phẩm bán chạy'), 'Fake dashboard content is still visible.');
   await expect(!(await page.locator('body').innerText()).includes('Quản trị viên Demo'), 'Demo user name is visible.');
-  await page.getByRole('button', { name: 'Sản phẩm', exact: true }).click();
-  await expect(await page.getByText('Chức năng đang được hoàn thiện.').isVisible(), 'Pending menu toast missing.');
-  await page.getByRole('button', { name: 'Thêm sản phẩm' }).click();
-  await expect(await page.getByText('Chức năng đang được hoàn thiện.').isVisible(), 'Quick-action toast missing.');
   await page.screenshot({ path: 'test-results/admin-dashboard.png', fullPage: true });
   const storedAdmin = await page.evaluate(() => localStorage.getItem('ktpm.auth.v1'));
   await expect(storedAdmin?.includes('accessToken'), 'JWT is not persisted.');
   await expect(!storedAdmin.includes(password) && !storedAdmin.includes('password'), 'Password leaked into auth storage.');
   pass('Admin login receives JWT and opens Dashboard');
 
+  await page.getByRole('link', { name: 'Sản phẩm', exact: true }).click();
+  await page.waitForURL('**/admin/products');
+  await expect(await page.getByRole('heading', { name: 'Sản phẩm', exact: true }).last().isVisible(), 'Product page missing.');
+  await expect(await page.locator('#product-rows').isVisible(), 'Product data table missing.');
+  await expect(await page.getByRole('button', { name: 'Thêm sản phẩm' }).isVisible(), 'Product create action missing.');
+  pass('Admin product page calls the protected API');
+
+  await page.getByRole('link', { name: 'Tồn kho', exact: true }).click();
+  await page.waitForURL('**/admin/inventory');
+  await expect(await page.getByText('Dữ liệu đọc trực tiếp từ products.stock_quantity; trang này không điều chỉnh tồn.').isVisible(), 'Inventory source notice missing.');
+  await expect(await page.locator('#inventory-rows').isVisible(), 'Inventory data table missing.');
+  pass('Inventory page is read-only and database-backed');
+
+  await page.getByRole('link', { name: 'Tài khoản', exact: true }).click();
+  await page.waitForURL('**/admin/accounts');
+  await expect(await page.locator('#account-rows').isVisible(), 'Account data table missing.');
+  await expect(await page.getByRole('button', { name: 'Thêm tài khoản' }).isVisible(), 'Account create action missing.');
+  pass('Admin account management page calls the protected API');
+
+  await page.getByRole('link', { name: 'Báo cáo', exact: true }).click();
+  await page.waitForURL('**/admin/reports');
+  await expect(await page.getByText('Doanh thu, hóa đơn và sản phẩm bán chạy chỉ tính các hóa đơn COMPLETED.').isVisible(), 'Report rule notice missing.');
+  await expect(await page.locator('#top-product-rows').isVisible(), 'Top-product report missing.');
+  await expect(await page.locator('#report-inventory-rows').isVisible(), 'Inventory report missing.');
+  pass('Admin report page uses completed invoices and database-backed inventory');
+
   await page.reload();
-  await page.waitForURL('**/admin/dashboard');
-  await expect(await page.getByText('Xin chào,').isVisible(), 'Dashboard did not survive refresh.');
+  await page.waitForURL('**/admin/reports');
+  await expect(await page.getByRole('heading', { name: 'Báo cáo quản trị' }).isVisible(), 'Protected Admin page did not survive refresh.');
   pass('Refresh restores auth state');
 
   const logoutResponse = page.waitForResponse((response) => response.url().endsWith('/api/auth/logout'));

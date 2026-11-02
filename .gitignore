@@ -1,5 +1,7 @@
 target/
 node_modules/
+.maven-cache/
+.maven-cache/
 .env
 *.log
 .idea/

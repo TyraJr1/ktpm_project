@@ -82,3 +82,94 @@ export function verifySalesAccess() {
 export function verifyWarehouseAccess() {
   return apiRequest('/api/warehouse/ping', { authenticated: true });
 }
+
+function queryString(params = {}) {
+  const search = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') search.set(key, value);
+  });
+  const value = search.toString();
+  return value ? `?${value}` : '';
+}
+
+export function listCategories() {
+  return apiRequest('/api/admin/categories', { authenticated: true });
+}
+
+export function saveCategory(id, body) {
+  return apiRequest(`/api/admin/categories${id ? `/${id}` : ''}`, {
+    method: id ? 'PUT' : 'POST', body, authenticated: true,
+  });
+}
+
+export function listProducts(params) {
+  return apiRequest(`/api/admin/products${queryString(params)}`, { authenticated: true });
+}
+
+export function saveProduct(id, body) {
+  return apiRequest(`/api/admin/products${id ? `/${id}` : ''}`, {
+    method: id ? 'PUT' : 'POST', body, authenticated: true,
+  });
+}
+
+export function updateProductStatus(id, status) {
+  return apiRequest(`/api/admin/products/${id}/status`, {
+    method: 'PATCH', body: { status }, authenticated: true,
+  });
+}
+
+export function listSuppliers(params) {
+  return apiRequest(`/api/admin/suppliers${queryString(params)}`, { authenticated: true });
+}
+
+export function saveSupplier(id, body) {
+  return apiRequest(`/api/admin/suppliers${id ? `/${id}` : ''}`, {
+    method: id ? 'PUT' : 'POST', body, authenticated: true,
+  });
+}
+
+export function listInventory(params) {
+  return apiRequest(`/api/admin/inventory${queryString(params)}`, { authenticated: true });
+}
+
+export function listInvoices(params) {
+  return apiRequest(`/api/admin/invoices${queryString(params)}`, { authenticated: true });
+}
+
+export function getInvoiceDetail(id) {
+  return apiRequest(`/api/admin/invoices/${id}`, { authenticated: true });
+}
+
+export function listAccounts(params) {
+  return apiRequest(`/api/admin/accounts${queryString(params)}`, { authenticated: true });
+}
+
+export function createAccount(body) {
+  return apiRequest('/api/admin/accounts', { method: 'POST', body, authenticated: true });
+}
+
+export function updateAccount(id, body) {
+  return apiRequest(`/api/admin/accounts/${id}`, { method: 'PUT', body, authenticated: true });
+}
+
+export function changeAccountPassword(id, password) {
+  return apiRequest(`/api/admin/accounts/${id}/password`, {
+    method: 'PATCH', body: { password }, authenticated: true,
+  });
+}
+
+export function deleteAccount(id) {
+  return apiRequest(`/api/admin/accounts/${id}`, { method: 'DELETE', authenticated: true });
+}
+
+export function getReportSummary(fromDate, toDate) {
+  return apiRequest(`/api/admin/reports/summary${queryString({ fromDate, toDate })}`, { authenticated: true });
+}
+
+export function getTopProducts(fromDate, toDate, limit = 10) {
+  return apiRequest(`/api/admin/reports/top-products${queryString({ fromDate, toDate, limit })}`, { authenticated: true });
+}
+
+export function getInventoryReport(params = {}) {
+  return apiRequest(`/api/admin/reports/inventory${queryString(params)}`, { authenticated: true });
+}

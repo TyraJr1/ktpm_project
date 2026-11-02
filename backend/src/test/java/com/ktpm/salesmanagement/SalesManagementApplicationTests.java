@@ -1,6 +1,14 @@
 package com.ktpm.salesmanagement;
 
+import com.ktpm.salesmanagement.repository.CategoryRepository;
+import com.ktpm.salesmanagement.repository.InvoiceRepository;
+import com.ktpm.salesmanagement.repository.OrderDetailRepository;
+import com.ktpm.salesmanagement.repository.ProductRepository;
+import com.ktpm.salesmanagement.repository.SupplierRepository;
 import com.ktpm.salesmanagement.repository.UserRepository;
+import com.ktpm.salesmanagement.repository.SalesOrderRepository;
+import com.ktpm.salesmanagement.repository.PurchaseReceiptRepository;
+import com.ktpm.salesmanagement.repository.StockTransactionRepository;
 import java.security.SecureRandom;
 import java.util.Base64;
 import org.junit.jupiter.api.Test;
@@ -23,6 +31,14 @@ class SalesManagementApplicationTests {
 
     @MockitoBean
     UserRepository userRepository;
+    @MockitoBean CategoryRepository categoryRepository;
+    @MockitoBean ProductRepository productRepository;
+    @MockitoBean SupplierRepository supplierRepository;
+    @MockitoBean InvoiceRepository invoiceRepository;
+    @MockitoBean OrderDetailRepository orderDetailRepository;
+    @MockitoBean SalesOrderRepository salesOrderRepository;
+    @MockitoBean PurchaseReceiptRepository purchaseReceiptRepository;
+    @MockitoBean StockTransactionRepository stockTransactionRepository;
 
     @DynamicPropertySource
     static void securityProperties(DynamicPropertyRegistry registry) {
