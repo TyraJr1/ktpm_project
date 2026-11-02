@@ -70,7 +70,9 @@ Các mục dưới đây chỉ ghi nhận mâu thuẫn trong source document. Kh
 
 **RECOMMENDED RESOLUTION:** Người dùng quyết định bổ sung/sửa bộ FR trong tài liệu nguồn trước khi triển khai quản lý tài khoản.
 
-**STATUS = OPEN — REQUIRE USER DECISION**
+**USER DECISION 02/11/2026:** Triển khai danh sách/tìm kiếm, tạo, sửa thông tin/role/status, đổi mật khẩu và xóa có điều kiện; chỉ dùng ba role hiện có; mật khẩu tối thiểu 8 ký tự có chữ hoa, chữ thường và số; không đổi schema. Trace bằng `USR-ADM-ACC-01..05` thay vì tự thêm mã FR vào Word.
+
+**STATUS = RESOLVED FOR IMPLEMENTATION — WORD SYNC STILL REQUIRED**
 
 ## INC-006 Kiểm kê kho chưa có FR và Use Case riêng
 
@@ -98,7 +100,9 @@ Các mục dưới đây chỉ ghi nhận mâu thuẫn trong source document. Kh
 
 **RECOMMENDED RESOLUTION:** Người dùng xác định chính xác các loại báo cáo, filter và quyền export được giữ trong scope, rồi đồng bộ FR/Use Case/Activity/Database.
 
-**STATUS = OPEN — REQUIRE USER DECISION**
+**USER DECISION 02/11/2026:** Chỉ triển khai FR-RPT-01..05: khoảng ngày, tổng doanh thu, số hóa đơn, sản phẩm bán chạy và tồn kho. Không triển khai lợi nhuận, báo cáo theo khách hàng/nhân viên hoặc export PDF/Excel.
+
+**STATUS = RESOLVED FOR IMPLEMENTATION — WORD SYNC STILL REQUIRED**
 
 ## INC-008 Spring Security có nhưng Spring Boot chưa được xác định
 
@@ -182,7 +186,9 @@ Các mục dưới đây chỉ ghi nhận mâu thuẫn trong source document. Kh
 
 **RECOMMENDED RESOLUTION:** Người dùng xác nhận actor của Hình 3.10 và cập nhật sơ đồ/role matrix.
 
-**STATUS = OPEN — REQUIRE USER DECISION**
+**USER DECISION 02/11/2026:** Báo cáo quản trị chỉ dành cho role `ADMIN`; không cấp cho `SALES_STAFF`.
+
+**STATUS = RESOLVED FOR IMPLEMENTATION — WORD SYNC STILL REQUIRED**
 
 ## INC-014 Mã FR của UC báo cáo tồn kho bị cắt
 
@@ -196,7 +202,9 @@ Các mục dưới đây chỉ ghi nhận mâu thuẫn trong source document. Kh
 
 **RECOMMENDED RESOLUTION:** Người dùng xác nhận mã đầy đủ có phải FR-RPT-05 hay không.
 
-**STATUS = OPEN — REQUIRE USER DECISION**
+**USER DECISION 02/11/2026:** Ánh xạ Admin UC-16 tới `FR-RPT-05`; không sửa file Word trong task code.
+
+**STATUS = RESOLVED FOR IMPLEMENTATION — WORD SYNC STILL REQUIRED**
 
 ## INC-015 Hệ mã FR trong Thiết kế xử lý khác bộ FR chính
 
@@ -238,7 +246,9 @@ Các mục dưới đây chỉ ghi nhận mâu thuẫn trong source document. Kh
 
 **RECOMMENDED RESOLUTION:** Người dùng quyết định từng nội dung được nâng thành Requirement chính hay bị loại khỏi Processing Design; không code trước quyết định.
 
-**STATUS = OPEN — REQUIRE USER DECISION**
+**USER DECISION 02/11/2026:** Trong phạm vi Admin chỉ nâng quy tắc mật khẩu tối thiểu 8 ký tự có chữ hoa, chữ thường và số, và trạng thái invoice báo cáo là `COMPLETED`. Các nghiệp vụ mở rộng còn lại tiếp tục không được triển khai.
+
+**STATUS = PARTIALLY RESOLVED — REMAINING PROCESSING-DESIGN ITEMS OUT OF SCOPE**
 
 ## INC-018 Actor nhập hàng không thống nhất
 

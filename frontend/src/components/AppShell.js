@@ -4,13 +4,14 @@ import { navigate } from '../utils/router.js';
 import { displayName, displayRole, initialsFor } from '../utils/userDisplay.js';
 
 const menuItems = [
-  ['Tổng quan', 'dashboard'],
-  ['Danh mục', 'folder'],
-  ['Sản phẩm', 'box'],
-  ['Nhà cung cấp', 'truck'],
-  ['Tồn kho', 'inventory'],
-  ['Tài khoản', 'users'],
-  ['Báo cáo', 'chart'],
+  { label: 'Tổng quan', icon: 'dashboard', path: '/admin/dashboard' },
+  { label: 'Danh mục', icon: 'folder', path: '/admin/categories' },
+  { label: 'Sản phẩm', icon: 'box', path: '/admin/products' },
+  { label: 'Nhà cung cấp', icon: 'truck', path: '/admin/suppliers' },
+  { label: 'Tồn kho', icon: 'inventory', path: '/admin/inventory' },
+  { label: 'Hóa đơn', icon: 'receipt', path: '/admin/invoices' },
+  { label: 'Tài khoản', icon: 'users', path: '/admin/accounts' },
+  { label: 'Báo cáo', icon: 'chart', path: '/admin/reports' },
 ];
 
 const icons = {
@@ -21,19 +22,11 @@ const icons = {
   inventory: '<path d="M4 4h16v5H4zM5 9v11h14V9M9 13h6"/>',
   users: '<path d="M16 20v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2M9.5 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM17 11a4 4 0 0 1 4 4v2"/>',
   chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  receipt: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h4"/>',
 };
 
 function icon(name) {
   return `<svg aria-hidden="true" viewBox="0 0 24 24">${icons[name]}</svg>`;
-}
-
-export function showComingSoon(root) {
-  const toast = root.querySelector('#app-toast');
-  if (!toast) return;
-  toast.textContent = 'Chức năng đang được hoàn thiện.';
-  toast.hidden = false;
-  window.clearTimeout(showComingSoon.timeoutId);
-  showComingSoon.timeoutId = window.setTimeout(() => { toast.hidden = true; }, 2800);
 }
 
 export function renderShell(root, auth, contentHtml, options = {}) {
@@ -46,9 +39,7 @@ export function renderShell(root, auth, contentHtml, options = {}) {
           <span><strong>Văn Phòng Phẩm</strong><small>Hệ thống quản lý bán hàng</small></span>
         </a>
         <nav class="sidebar__nav" aria-label="Điều hướng chính">
-          ${menuItems.map(([label, iconName], index) => index === 0
-            ? `<a class="nav-item ${active === label ? 'is-active' : ''}" href="/admin/dashboard" data-link>${icon(iconName)}<span>${label}</span></a>`
-            : `<button class="nav-item nav-item--pending" type="button" data-coming-soon>${icon(iconName)}<span>${label}</span></button>`).join('')}
+          ${menuItems.map((item) => `<a class="nav-item ${active === item.label ? 'is-active' : ''}" href="${item.path}" data-link>${icon(item.icon)}<span>${item.label}</span></a>`).join('')}
         </nav>
         <div class="sidebar__footer">
           <button class="nav-item nav-item--logout" id="sidebar-logout" type="button">
@@ -68,16 +59,11 @@ export function renderShell(root, auth, contentHtml, options = {}) {
         </header>
         <main class="workspace__content">${contentHtml}</main>
       </section>
-      <div class="app-toast" id="app-toast" role="status" aria-live="polite" hidden></div>
     </div>`;
 
   root.querySelector('#current-user-name').textContent = displayName(auth);
   root.querySelector('#current-user-role').textContent = displayRole(auth.role);
   root.querySelector('#user-avatar').textContent = initialsFor(auth);
-  root.querySelectorAll('[data-coming-soon]').forEach((button) => {
-    button.addEventListener('click', () => showComingSoon(root));
-  });
-
   const handleLogout = async (button) => {
     button.disabled = true;
     button.textContent = 'Đang đăng xuất…';
