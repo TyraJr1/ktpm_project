@@ -1,5 +1,13 @@
 # Backend development
 
+## Start on a newly cloned machine
+
+Follow the [root quick start](../README.md): install JDK 25/Maven/MySQL, create an **empty** `ktpm_sales_db`, then run `scripts/run-backend.ps1` from the repository root. The script prompts for the local MySQL password and generates a temporary JWT secret if one is not already set. Flyway creates the schema and demo users on first startup.
+
+Do not apply `database/schema.sql` to that empty database before starting the backend: Flyway V1 also creates those tables. A database with existing tables but no `flyway_schema_history` needs separate review; do not reset it or enable automatic baselining without checking its data and schema.
+
+To run Maven directly instead of the script, set `DB_PASSWORD` and `JWT_SECRET` in your own process environment, then run `mvn spring-boot:run` from `backend/`. Never commit either value.
+
 ## Required environment variables
 
 - `DB_URL` (optional local default targets `ktpm_sales_db`)
