@@ -10,17 +10,19 @@
 
 Không sử dụng SQL Server và không có cú pháp `IDENTITY(1,1)`.
 
-## Thứ tự chạy
+## Thứ tự chạy cho bản clone mới
 
-1. Chạy `schema.sql` để tạo database và 11 bảng.
-2. Chạy `seed.sql` để thêm category, product, supplier và customer demo tối thiểu.
+1. Tạo **database rỗng** `ktpm_sales_db` bằng MySQL Workbench hoặc CLI:
 
-Ví dụ bằng MySQL CLI từ thư mục project:
+   ```sql
+   CREATE DATABASE IF NOT EXISTS ktpm_sales_db
+     CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   ```
 
-```cmd
-mysql -u USERNAME -p < database\schema.sql
-mysql -u USERNAME -p < database\seed.sql
-```
+2. Chạy backend theo [README gốc](../README.md). Flyway V1 tạo 11 bảng; Flyway V2 tạo ba tài khoản demo. Không chạy `schema.sql` trước Flyway trên database mới vì các bảng sẽ bị tạo hai lần.
+3. Nếu cần thêm dữ liệu category/product/supplier/customer demo, chỉ chạy `seed.sql` **một lần sau khi Flyway hoàn tất** trên database phát triển đã xác nhận. Script này không phải migration Flyway và không dành cho dữ liệu thật.
+
+`schema.sql` được giữ làm baseline SQL tham chiếu. Với database đã có bảng hoặc dữ liệu nhưng chưa có lịch sử Flyway, cần đối chiếu schema và lập kế hoạch baseline riêng trước khi chạy backend; không reset database và không tự bật Flyway baseline.
 
 Không ghi password trực tiếp vào command history hoặc source code.
 
