@@ -1,4 +1,5 @@
 package com.ktpm.salesmanagement.entity;
+package com.yourproject.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,6 +14,8 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import javax.persistence.*;
 
 @Entity
 @Table(name = "invoices", uniqueConstraints = {
@@ -119,5 +122,15 @@ public class Invoice {
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
+}
+public class SalesOrderDetail {
+    // ... các trường id, price, quantity...
+
+    @ManyToOne
+    @JoinColumn(name = "order_id")
+    @JsonBackReference // Khớp với @JsonManagedReference ở trên để chặn vòng lặp JSON
+    private SalesOrder salesOrder;
+    
+    // ... Getters, Setters
 }
 

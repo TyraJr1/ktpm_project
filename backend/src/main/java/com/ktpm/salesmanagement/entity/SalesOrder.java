@@ -1,4 +1,5 @@
 package com.ktpm.salesmanagement.entity;
+package com.yourproject.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,12 +14,20 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import javax.persistence.*;
+import java.util.List;
 
 @Entity
 @Table(name = "sales_orders", uniqueConstraints = {
         @UniqueConstraint(name = "uq_sales_orders_code", columnNames = "order_code")
 })
 public class SalesOrder {
+
+    @OneToMany(mappedBy = "salesOrder", cascade = CascadeType.ALL) 
+    // 2. BẮT BUỘC phải có annotation này để lúc trả JSON về Frontend không bị vòng lặp vô hạn
+    @JsonManagedReference 
+    private List<SalesOrderDetail> orderDetails;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

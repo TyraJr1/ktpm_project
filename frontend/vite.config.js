@@ -6,4 +6,16 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
   },
+  esbuild: {
+    loader: "jsx",
+    include: /src\/.*\.js$/,
+    exclude: []
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      loader: {
+        '.js': 'jsx',
+      },
+    },
+  },
 });

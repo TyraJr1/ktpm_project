@@ -173,3 +173,35 @@ export function getTopProducts(fromDate, toDate, limit = 10) {
 export function getInventoryReport(params = {}) {
   return apiRequest(`/api/admin/reports/inventory${queryString(params)}`, { authenticated: true });
 }
+
+
+// ── Sales Staff API ──
+export function getSalesDashboard() {
+  return apiRequest('/api/sales/dashboard', { authenticated: true });
+}
+
+export function listSalesProducts(params) {
+  return apiRequest(`/api/products${queryString(params)}`, { authenticated: true });
+}
+
+export function createSalesOrder(body) {
+  return apiRequest('/api/sales-orders', { method: 'POST', body, authenticated: true });
+}
+
+export function listSalesOrders(params) {
+  return apiRequest(`/api/sales-orders${queryString(params)}`, { authenticated: true });
+}
+
+export function getSalesOrderDetail(id) {
+  return apiRequest(`/api/sales-orders/${id}`, { authenticated: true });
+}
+
+export function listCustomers(params) {
+  return apiRequest(`/api/customers${queryString(params)}`, { authenticated: true });
+}
+
+export function saveCustomer(id, body) {
+  return apiRequest(`/api/customers${id ? `/${id}` : ''}`, {
+    method: id ? 'PUT' : 'POST', body, authenticated: true,
+  });
+}

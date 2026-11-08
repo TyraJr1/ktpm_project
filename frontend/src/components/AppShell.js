@@ -3,6 +3,7 @@ import { logout } from '../api/client.js';
 import { navigate } from '../utils/router.js';
 import { displayName, displayRole, initialsFor } from '../utils/userDisplay.js';
 
+
 const menuItems = [
   { label: 'Tổng quan', icon: 'dashboard', path: '/admin/dashboard' },
   { label: 'Danh mục', icon: 'folder', path: '/admin/categories' },

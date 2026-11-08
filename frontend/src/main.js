@@ -10,6 +10,10 @@ import { renderLoginPage } from './pages/LoginPage.js';
 import { renderForbiddenPage, renderRolePlaceholderPage } from './pages/RolePlaceholderPage.js';
 import { renderAccountPage, renderReportPage } from './pages/AdminAccountReportPages.js';
 import { currentPath, navigate } from './utils/router.js';
+import { renderSalesDashboardPage } from './pages/SaleDashboardPage.js';
+import { renderSalesOrderPage } from './pages/SaleOrderPage.js';
+import { renderCustomerPage } from './pages/CustomerPage.js';
+import { renderOrderHistoryPage } from './pages/OrderHistoryPage.js';
 
 const root = document.querySelector('#app');
 
@@ -30,7 +34,10 @@ async function renderRoute() {
     '/admin/invoices': 'ADMIN',
     '/admin/accounts': 'ADMIN',
     '/admin/reports': 'ADMIN',
-    '/sales': 'SALES_STAFF',
+    '/sales/dashboard': 'SALES_STAFF',
+    '/sales/orders': 'SALES_STAFF',
+    '/sales/order-history': 'SALES_STAFF',
+    '/sales/customers': 'SALES_STAFF',
     '/warehouse': 'WAREHOUSE_STAFF',
   };
   const requiredRole = routeRoles[path];
@@ -54,7 +61,17 @@ async function renderRoute() {
       '/admin/reports': renderReportPage,
     };
     if (requiredRole === 'ADMIN') await adminPages[path](root, guard.auth);
-    else await renderRolePlaceholderPage(root, guard.auth);
+    else if (requiredRole === 'SALES_STAFF') {
+      const salesPages = {
+        '/sales/dashboard': renderSalesDashboardPage,
+        '/sales/orders': renderSalesOrderPage,
+        '/sales/order-history': renderOrderHistoryPage,
+        '/sales/customers': renderCustomerPage,
+      };
+      const renderPage = salesPages[path];
+      if (renderPage) await renderPage(root, guard.auth);
+      else await renderRolePlaceholderPage(root, guard.auth);
+    } else await renderRolePlaceholderPage(root, guard.auth);
     return;
   }
 
