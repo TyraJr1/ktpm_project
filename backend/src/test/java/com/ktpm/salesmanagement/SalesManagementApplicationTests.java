@@ -1,6 +1,7 @@
 package com.ktpm.salesmanagement;
 
 import com.ktpm.salesmanagement.repository.CategoryRepository;
+import com.ktpm.salesmanagement.repository.CustomerRepository;
 import com.ktpm.salesmanagement.repository.InvoiceRepository;
 import com.ktpm.salesmanagement.repository.OrderDetailRepository;
 import com.ktpm.salesmanagement.repository.ProductRepository;
@@ -32,6 +33,7 @@ class SalesManagementApplicationTests {
     @MockitoBean
     UserRepository userRepository;
     @MockitoBean CategoryRepository categoryRepository;
+    @MockitoBean CustomerRepository customerRepository;
     @MockitoBean ProductRepository productRepository;
     @MockitoBean SupplierRepository supplierRepository;
     @MockitoBean InvoiceRepository invoiceRepository;

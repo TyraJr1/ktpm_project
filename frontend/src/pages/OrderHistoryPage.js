@@ -1,103 +1,165 @@
-import { ApiError, listSalesOrders, getSalesOrderDetail } from '../api/client.js';
+import {
+  ApiError,
+  getSalesInvoiceDetail,
+  listSalesInvoices,
+} from '../api/client.js';
 import { renderSalesShell } from '../components/SalesShell.js';
+import { escapeHtml, formatCurrency, formatDateTime } from '../utils/format.js';
 
-let orders = [];
-
-function renderTable(container) {
-  if (orders.length === 0) {
-    container.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:1rem">Chưa có đơn hàng nào.</td></tr>';
-    return;
-  }
-  container.innerHTML = orders.map((order) => `
-    <tr>
-      <td>#${order.id}</td>
-      <td>${order.customerName || 'Khách lẻ'}</td>
-      <td>${order.createdAt ? new Date(order.createdAt).toLocaleString('vi-VN') : '—'}</td>
-      <td style="font-weight:600;color:var(--primary,#2563eb)">${(order.totalAmount ?? 0).toLocaleString('vi-VN')} đ</td>
-      <td><span class="badge ${order.status === 'COMPLETED' ? 'badge--success' : 'badge--warning'}">${order.status || '—'}</span></td>
-      <td><button class="button button--ghost" data-detail-id="${order.id}" type="button">Chi tiết</button></td>
-    </tr>`).join('');
-}
-
-function openDetailModal(root, orderDetail) {
-  let overlay = root.querySelector('#order-detail-overlay');
-  if (overlay) overlay.remove();
-
-  const items = orderDetail.items || [];
-  const itemsHtml = items.length === 0
-    ? '<p style="text-align:center;color:#888">Không có sản phẩm</p>'
-    : items.map((item) => `
-      <div style="display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid #eee">
-        <span>${item.productName || 'Sản phẩm'} (x${item.quantity})</span>
-        <span>${((item.price ?? 0) * item.quantity).toLocaleString('vi-VN')} đ</span>
-      </div>`).join('');
-
-  overlay = document.createElement('div');
-  overlay.id = 'order-detail-overlay';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:1000';
-  overlay.innerHTML = `
-    <div style="background:#fff;border-radius:8px;padding:1.5rem;width:30rem;max-width:95vw">
-      <h2 style="margin:0 0 1rem">Chi tiết đơn #${orderDetail.id}</h2>
-      <p style="margin-bottom:.25rem"><strong>Khách hàng:</strong> ${orderDetail.customerName || 'Khách lẻ'}</p>
-      <p style="margin-bottom:1rem"><strong>SĐT:</strong> ${orderDetail.customerPhone || '—'}</p>
-      <div style="border-top:1px solid #ddd;padding-top:.75rem;margin-bottom:.75rem;max-height:15rem;overflow-y:auto">${itemsHtml}</div>
-      <div style="display:flex;justify-content:space-between;font-weight:700;font-size:1.1rem;margin-bottom:1rem">
-        <span>Tổng cộng:</span>
-        <span style="color:var(--primary,#2563eb)">${(orderDetail.totalAmount ?? 0).toLocaleString('vi-VN')} đ</span>
-      </div>
-      <div style="display:flex;justify-content:flex-end">
-        <button class="button button--ghost" id="btn-close-detail" type="button">Đóng</button>
-      </div>
-    </div>`;
-
-  root.appendChild(overlay);
-
-  overlay.querySelector('#btn-close-detail').addEventListener('click', () => overlay.remove());
-  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+function paymentLabel(method) {
+  const map = { CASH: 'Tiền mặt', TRANSFER: 'Chuyển khoản', CARD: 'Thẻ' };
+  return map[method] || method || 'Tiền mặt';
 }
 
 export async function renderOrderHistoryPage(root, auth) {
-  orders = [];
-
   renderSalesShell(root, auth, `
-    <div style="overflow-x:auto;background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.1)">
-      <table class="data-table" style="width:100%">
-        <thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>Ngày tạo</th><th>Tổng tiền</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
-        <tbody id="orders-tbody"><tr><td colspan="6" style="text-align:center;padding:1rem">Đang tải…</td></tr></tbody>
-      </table>
-    </div>
-    <div class="form-alert" id="page-error" role="alert" hidden></div>
+    <section class="admin-page">
+      <header class="admin-page__heading">
+        <div>
+          <h2>Tra cứu hóa đơn & Lịch sử đơn bán hàng</h2>
+          <p>Tìm kiếm hóa đơn theo mã hoặc khoảng thời gian và xem chi tiết từng dòng sản phẩm (FR-BIL-02..04).</p>
+        </div>
+        <a class="button button--primary" href="/sales/orders" data-link>+ Lập đơn & Hóa đơn mới</a>
+      </header>
+
+      <div class="form-alert" id="sales-invoice-error" role="alert" hidden></div>
+
+      <form class="data-filter data-filter--dates" id="sales-invoice-filter">
+        <input name="code" placeholder="Mã hóa đơn (INV-...) hoặc mã đơn (ORD-...)">
+        <label>Từ ngày<input name="fromDate" type="date"></label>
+        <label>Đến ngày<input name="toDate" type="date"></label>
+        <button class="button button--ghost" type="submit">Tra cứu</button>
+        <button class="button button--ghost" type="button" id="sales-invoice-reset">Tất cả</button>
+      </form>
+
+      <div class="data-panel">
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Mã hóa đơn</th>
+                <th>Ngày lập</th>
+                <th>Mã đơn hàng</th>
+                <th>Tổng tiền</th>
+                <th>Thanh toán</th>
+                <th>Trạng thái</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="sales-invoice-rows">
+              <tr><td class="empty-cell" colspan="7">Đang tải danh sách hóa đơn...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="data-count" id="sales-invoice-count"></p>
+      </div>
+
+      <section class="invoice-detail" id="sales-invoice-detail" hidden></section>
+    </section>
   `, { active: 'Lịch sử đơn' });
 
-  // Load orders
-  try {
-    const data = await listSalesOrders({});
-    orders = data.content || data || [];
-    const tbody = root.querySelector('#orders-tbody');
-    if (tbody) renderTable(tbody);
-  } catch (error) {
-    const alert = root.querySelector('#page-error');
-    alert.textContent = error instanceof ApiError ? error.message : 'Không thể tải lịch sử đơn hàng.';
-    alert.hidden = false;
-  }
+  const filter = root.querySelector('#sales-invoice-filter');
+  const alertEl = root.querySelector('#sales-invoice-error');
+  const detailEl = root.querySelector('#sales-invoice-detail');
 
-  // Detail click (delegation)
-  root.addEventListener('click', async (e) => {
-    const detailBtn = e.target.closest('[data-detail-id]');
-    if (!detailBtn) return;
-    const id = Number(detailBtn.dataset.detailId);
-    detailBtn.disabled = true;
-    detailBtn.textContent = 'Đang tải…';
+  const showError = (error) => {
+    alertEl.textContent = error instanceof ApiError ? error.message : String(error || 'Không thể xử lý yêu cầu.');
+    alertEl.hidden = false;
+  };
+
+  const clearError = () => {
+    alertEl.hidden = true;
+  };
+
+  const load = async () => {
+    clearError();
+    const code = filter.elements.code.value.trim();
+    const fromDate = filter.elements.fromDate.value;
+    const toDate = filter.elements.toDate.value;
+
+    if (fromDate && toDate && fromDate > toDate) {
+      showError('Từ ngày không được lớn hơn đến ngày.');
+      return;
+    }
+
     try {
-      const detail = await getSalesOrderDetail(id);
-      openDetailModal(root, detail);
+      const data = await listSalesInvoices({ code, fromDate, toDate, size: 100 });
+      const list = data.content || [];
+      root.querySelector('#sales-invoice-count').textContent = `${(data.totalElements ?? list.length).toLocaleString('vi-VN')} hóa đơn`;
+      root.querySelector('#sales-invoice-rows').innerHTML = list.length ? list.map((item) => `
+        <tr>
+          <td><strong>${escapeHtml(item.invoiceCode)}</strong></td>
+          <td>${formatDateTime(item.invoiceDate)}</td>
+          <td>${escapeHtml(item.orderCode)}</td>
+          <td><strong>${formatCurrency(item.totalAmount)}</strong></td>
+          <td>${escapeHtml(paymentLabel(item.paymentMethod))}</td>
+          <td><span class="data-status is-active">${escapeHtml(item.status)}</span></td>
+          <td><button class="table-action" type="button" data-sales-invoice-detail="${item.id}">Chi tiết</button></td>
+        </tr>
+      `).join('') : '<tr><td class="empty-cell" colspan="7">Không có hóa đơn phù hợp.</td></tr>';
     } catch (error) {
-      const alert = root.querySelector('#page-error');
-      alert.textContent = error instanceof ApiError ? error.message : 'Không thể tải chi tiết đơn hàng.';
-      alert.hidden = false;
-    } finally {
-      detailBtn.disabled = false;
-      detailBtn.textContent = 'Chi tiết';
+      showError(error);
+    }
+  };
+
+  filter.addEventListener('submit', (event) => {
+    event.preventDefault();
+    load();
+  });
+
+  root.querySelector('#sales-invoice-reset').addEventListener('click', () => {
+    filter.elements.code.value = '';
+    filter.elements.fromDate.value = '';
+    filter.elements.toDate.value = '';
+    load();
+  });
+
+  root.addEventListener('click', async (event) => {
+    const button = event.target.closest('[data-sales-invoice-detail]');
+    if (!button) return;
+    clearError();
+    try {
+      const item = await getSalesInvoiceDetail(button.dataset.salesInvoiceDetail);
+      detailEl.hidden = false;
+      detailEl.innerHTML = `
+        <div class="invoice-detail__heading">
+          <div>
+            <p class="eyebrow">Chi tiết hóa đơn bán hàng (FR-BIL-04)</p>
+            <h3>${escapeHtml(item.invoiceCode)}</h3>
+          </div>
+          <strong>${formatCurrency(item.totalAmount)}</strong>
+        </div>
+        <dl class="invoice-meta">
+          <div><dt>Đơn hàng</dt><dd>${escapeHtml(item.orderCode)}</dd></div>
+          <div><dt>Khách hàng</dt><dd>${escapeHtml(item.customerName || 'Khách lẻ')}</dd></div>
+          <div><dt>Nhân viên</dt><dd>${escapeHtml(item.createdBy || '—')}</dd></div>
+          <div><dt>Thanh toán</dt><dd>${escapeHtml(paymentLabel(item.paymentMethod))}</dd></div>
+          <div><dt>Ngày lập</dt><dd>${formatDateTime(item.invoiceDate)}</dd></div>
+        </dl>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>Mã SP</th><th>Sản phẩm</th><th>Số lượng</th><th>Đơn giá</th><th>Thành tiền</th></tr>
+            </thead>
+            <tbody>
+              ${(item.lines || []).map((line) => `
+                <tr>
+                  <td>${escapeHtml(line.productCode)}</td>
+                  <td>${escapeHtml(line.productName)}</td>
+                  <td>${line.quantity}</td>
+                  <td>${formatCurrency(line.unitPrice)}</td>
+                  <td><strong>${formatCurrency(line.lineTotal)}</strong></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+      detailEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (error) {
+      showError(error);
     }
   });
+
+  await load();
 }

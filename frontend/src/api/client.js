@@ -181,27 +181,35 @@ export function getSalesDashboard() {
 }
 
 export function listSalesProducts(params) {
-  return apiRequest(`/api/products${queryString(params)}`, { authenticated: true });
+  return apiRequest(`/api/sales/products${queryString(params)}`, { authenticated: true });
 }
 
 export function createSalesOrder(body) {
-  return apiRequest('/api/sales-orders', { method: 'POST', body, authenticated: true });
-}
-
-export function listSalesOrders(params) {
-  return apiRequest(`/api/sales-orders${queryString(params)}`, { authenticated: true });
+  return apiRequest('/api/sales/orders', { method: 'POST', body, authenticated: true });
 }
 
 export function getSalesOrderDetail(id) {
-  return apiRequest(`/api/sales-orders/${id}`, { authenticated: true });
+  return apiRequest(`/api/sales/orders/${id}`, { authenticated: true });
+}
+
+export function listSalesInvoices(params) {
+  return apiRequest(`/api/sales/invoices${queryString(params)}`, { authenticated: true });
+}
+
+export function getSalesInvoiceDetail(id) {
+  return apiRequest(`/api/sales/invoices/${id}`, { authenticated: true });
 }
 
 export function listCustomers(params) {
-  return apiRequest(`/api/customers${queryString(params)}`, { authenticated: true });
+  return apiRequest(`/api/sales/customers${queryString(params)}`, { authenticated: true });
 }
 
 export function saveCustomer(id, body) {
-  return apiRequest(`/api/customers${id ? `/${id}` : ''}`, {
+  return apiRequest(`/api/sales/customers${id ? `/${id}` : ''}`, {
     method: id ? 'PUT' : 'POST', body, authenticated: true,
   });
+}
+
+export function getCustomerPurchaseHistory(id) {
+  return apiRequest(`/api/sales/customers/${id}/purchase-history`, { authenticated: true });
 }
