@@ -213,3 +213,45 @@ export function saveCustomer(id, body) {
 export function getCustomerPurchaseHistory(id) {
   return apiRequest(`/api/sales/customers/${id}/purchase-history`, { authenticated: true });
 }
+
+// ── Warehouse Staff API ──
+export function getWarehouseDashboard() {
+  return apiRequest('/api/warehouse/dashboard', { authenticated: true });
+}
+
+export function listWarehouseProducts(params) {
+  return apiRequest(`/api/warehouse/products${queryString(params)}`, { authenticated: true });
+}
+
+export function listWarehouseSuppliers(params) {
+  return apiRequest(`/api/warehouse/suppliers${queryString(params)}`, { authenticated: true });
+}
+
+export function listPurchaseReceipts(params) {
+  return apiRequest(`/api/warehouse/receipts${queryString(params)}`, { authenticated: true });
+}
+
+export function getPurchaseReceiptDetail(id) {
+  return apiRequest(`/api/warehouse/receipts/${id}`, { authenticated: true });
+}
+
+export function createPurchaseReceipt(body) {
+  return apiRequest('/api/warehouse/receipts', { method: 'POST', body, authenticated: true });
+}
+
+export function confirmPurchaseReceipt(id) {
+  return apiRequest(`/api/warehouse/receipts/${id}/confirm`, { method: 'POST', authenticated: true });
+}
+
+export function createStockOutbound(body) {
+  return apiRequest('/api/warehouse/outbound', { method: 'POST', body, authenticated: true });
+}
+
+export function createStockAdjustment(body) {
+  return apiRequest('/api/warehouse/adjustments', { method: 'POST', body, authenticated: true });
+}
+
+export function listStockTransactions(params) {
+  return apiRequest(`/api/warehouse/transactions${queryString(params)}`, { authenticated: true });
+}
+

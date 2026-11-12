@@ -19,6 +19,7 @@ import com.ktpm.salesmanagement.repository.SupplierRepository;
 import com.ktpm.salesmanagement.repository.UserRepository;
 import com.ktpm.salesmanagement.repository.SalesOrderRepository;
 import com.ktpm.salesmanagement.repository.PurchaseReceiptRepository;
+import com.ktpm.salesmanagement.repository.PurchaseReceiptDetailRepository;
 import com.ktpm.salesmanagement.repository.StockTransactionRepository;
 import java.security.SecureRandom;
 import java.util.Base64;
@@ -69,6 +70,7 @@ class AuthenticationSecurityIntegrationTest {
     @MockitoBean OrderDetailRepository orderDetailRepository;
     @MockitoBean SalesOrderRepository salesOrderRepository;
     @MockitoBean PurchaseReceiptRepository purchaseReceiptRepository;
+    @MockitoBean PurchaseReceiptDetailRepository purchaseReceiptDetailRepository;
     @MockitoBean StockTransactionRepository stockTransactionRepository;
 
     private MockMvc mockMvc;
@@ -89,6 +91,10 @@ class AuthenticationSecurityIntegrationTest {
                 .thenReturn(new PageImpl<>(users.values().stream().toList()));
         when(invoiceRepository.sumTotalAmountByStatusAndDateRange(any(), any(), any()))
                 .thenReturn(BigDecimal.ZERO);
+        when(productRepository.search(any(), any(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(java.util.List.of()));
+        when(purchaseReceiptRepository.search(any(), any(), any(), any(), any(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(java.util.List.of()));
     }
 
     @Test
@@ -210,6 +216,20 @@ class AuthenticationSecurityIntegrationTest {
     void warehouseCanAccessWarehouseEndpoint() throws Exception {
         mockMvc.perform(get("/api/warehouse/ping").header("Authorization", bearer("warehouse01")))
                 .andExpect(status().isOk());
+        mockMvc.perform(get("/api/warehouse/products").header("Authorization", bearer("warehouse01")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray());
+        mockMvc.perform(get("/api/warehouse/receipts").header("Authorization", bearer("warehouse01")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray());
+    }
+
+    @Test
+    void salesAndAdminCannotAccessWarehouseBusinessEndpoints() throws Exception {
+        mockMvc.perform(get("/api/warehouse/products").header("Authorization", bearer("sales01")))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/warehouse/receipts").header("Authorization", bearer("admin01")))
+                .andExpect(status().isForbidden());
     }
 
     @Test

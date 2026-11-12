@@ -11,6 +11,8 @@ import java.util.Optional;
 public interface ProductRepository extends JpaRepository<Product, Long> {
     Optional<Product> findByProductCodeIgnoreCase(String productCode);
 
+    long countByStockQuantityLessThanEqual(Integer threshold);
+
     @Query(value = """
             select p from Product p join fetch p.category c
             where (:query is null or lower(p.productCode) like lower(concat('%', :query, '%'))

@@ -9,6 +9,7 @@ import com.ktpm.salesmanagement.repository.SupplierRepository;
 import com.ktpm.salesmanagement.repository.UserRepository;
 import com.ktpm.salesmanagement.repository.SalesOrderRepository;
 import com.ktpm.salesmanagement.repository.PurchaseReceiptRepository;
+import com.ktpm.salesmanagement.repository.PurchaseReceiptDetailRepository;
 import com.ktpm.salesmanagement.repository.StockTransactionRepository;
 import java.security.SecureRandom;
 import java.util.Base64;
@@ -40,6 +41,7 @@ class SalesManagementApplicationTests {
     @MockitoBean OrderDetailRepository orderDetailRepository;
     @MockitoBean SalesOrderRepository salesOrderRepository;
     @MockitoBean PurchaseReceiptRepository purchaseReceiptRepository;
+    @MockitoBean PurchaseReceiptDetailRepository purchaseReceiptDetailRepository;
     @MockitoBean StockTransactionRepository stockTransactionRepository;
 
     @DynamicPropertySource

@@ -14,6 +14,11 @@ import { renderSalesDashboardPage } from './pages/SaleDashboardPage.js';
 import { renderSalesOrderPage } from './pages/SaleOrderPage.js';
 import { renderCustomerPage } from './pages/CustomerPage.js';
 import { renderOrderHistoryPage } from './pages/OrderHistoryPage.js';
+import { renderWarehouseDashboardPage } from './pages/WarehouseDashboardPage.js';
+import { renderWarehouseInventoryPage } from './pages/WarehouseInventoryPage.js';
+import { renderWarehouseReceiptPage } from './pages/WarehouseReceiptPage.js';
+import { renderWarehouseTransactionPage } from './pages/WarehouseTransactionPage.js';
+import { renderWarehouseSupplierPage } from './pages/WarehouseSupplierPage.js';
 
 const root = document.querySelector('#app');
 
@@ -39,6 +44,11 @@ async function renderRoute() {
     '/sales/order-history': 'SALES_STAFF',
     '/sales/customers': 'SALES_STAFF',
     '/warehouse': 'WAREHOUSE_STAFF',
+    '/warehouse/dashboard': 'WAREHOUSE_STAFF',
+    '/warehouse/inventory': 'WAREHOUSE_STAFF',
+    '/warehouse/receipts': 'WAREHOUSE_STAFF',
+    '/warehouse/transactions': 'WAREHOUSE_STAFF',
+    '/warehouse/suppliers': 'WAREHOUSE_STAFF',
   };
   const requiredRole = routeRoles[path];
 
@@ -69,6 +79,18 @@ async function renderRoute() {
         '/sales/customers': renderCustomerPage,
       };
       const renderPage = salesPages[path];
+      if (renderPage) await renderPage(root, guard.auth);
+      else await renderRolePlaceholderPage(root, guard.auth);
+    } else if (requiredRole === 'WAREHOUSE_STAFF') {
+      const warehousePages = {
+        '/warehouse': renderWarehouseDashboardPage,
+        '/warehouse/dashboard': renderWarehouseDashboardPage,
+        '/warehouse/inventory': renderWarehouseInventoryPage,
+        '/warehouse/receipts': renderWarehouseReceiptPage,
+        '/warehouse/transactions': renderWarehouseTransactionPage,
+        '/warehouse/suppliers': renderWarehouseSupplierPage,
+      };
+      const renderPage = warehousePages[path];
       if (renderPage) await renderPage(root, guard.auth);
       else await renderRolePlaceholderPage(root, guard.auth);
     } else await renderRolePlaceholderPage(root, guard.auth);

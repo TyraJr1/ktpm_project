@@ -49,6 +49,6 @@ export function clearAuth() {
 export function routeForRole(role) {
   if (role === 'ADMIN') return '/admin/dashboard';
   if (role === 'SALES_STAFF') return '/sales/dashboard';
-  if (role === 'WAREHOUSE_STAFF') return '/warehouse';
+  if (role === 'WAREHOUSE_STAFF') return '/warehouse/dashboard';
   return '/login';
 }
