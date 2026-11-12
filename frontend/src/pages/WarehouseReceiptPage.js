@@ -273,6 +273,8 @@ export async function renderWarehouseReceiptPage(root, auth) {
   };
 
   const renderReceiptDetail = (item) => {
+    const lines = item.items || item.lines || [];
+    const totalCost = item.totalCost ?? item.totalAmount ?? 0;
     detailEl.hidden = false;
     detailEl.innerHTML = `
       <div class="invoice-detail__heading">
@@ -281,7 +283,7 @@ export async function renderWarehouseReceiptPage(root, auth) {
           <h3>${escapeHtml(item.receiptCode)} — ${escapeHtml(item.supplierName)}</h3>
         </div>
         <div style="display:flex;align-items:center;gap:12px;">
-          <strong>${formatCurrency(item.totalAmount)}</strong>
+          <strong>${formatCurrency(totalCost)}</strong>
           ${item.status === 'PENDING' ? `
             <button class="button button--primary" type="button" data-confirm-receipt="${item.id}">
               Xác nhận nhập kho & Cộng tồn (UC-22)
@@ -308,7 +310,7 @@ export async function renderWarehouseReceiptPage(root, auth) {
             </tr>
           </thead>
           <tbody>
-            ${(item.lines || []).map((line) => `
+            ${lines.map((line) => `
               <tr>
                 <td><strong>${escapeHtml(line.productCode)}</strong></td>
                 <td>${escapeHtml(line.productName)}</td>
@@ -362,7 +364,7 @@ export async function renderWarehouseReceiptPage(root, auth) {
           </td>
           <td>${formatDateTime(r.receiptDate)}</td>
           <td>${escapeHtml(r.createdBy || '—')}</td>
-          <td><strong>${formatCurrency(r.totalAmount)}</strong></td>
+          <td><strong>${formatCurrency(r.totalCost ?? r.totalAmount ?? 0)}</strong></td>
           <td>${statusBadge(r.status)}</td>
           <td class="table-actions">
             <button class="table-action" type="button" data-view-receipt="${r.id}">Chi tiết</button>
@@ -535,7 +537,8 @@ export async function renderWarehouseReceiptPage(root, auth) {
       confirmBtn.disabled = true;
       try {
         const updated = await confirmPurchaseReceipt(confirmBtn.dataset.confirmReceipt);
-        showSuccess(`Đã xác nhận phiếu nhập ${updated.receiptCode}, cộng tồn kho cho ${(updated.lines || []).length} mặt hàng và ghi lịch sử INBOUND!`);
+        const lineCount = (updated.items || updated.lines || []).length;
+        showSuccess(`Đã xác nhận phiếu nhập ${updated.receiptCode}, cộng tồn kho cho ${lineCount} mặt hàng và ghi lịch sử INBOUND!`);
         renderReceiptDetail(updated);
         await Promise.all([loadReceipts(), loadMasterData()]);
       } catch (error) {

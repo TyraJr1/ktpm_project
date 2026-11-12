@@ -32,6 +32,14 @@ function txTypeClass(type) {
   return '';
 }
 
+function formatReference(tx) {
+  if (tx.receiptCode) return `Phiếu nhập #${tx.receiptCode}`;
+  if (tx.orderCode) return `Đơn bán #${tx.orderCode}`;
+  if (tx.transactionType === 'OUTBOUND') return 'Xuất kho nội bộ';
+  if (tx.transactionType === 'ADJUSTMENT') return 'Kiểm kê kho';
+  return '—';
+}
+
 function formatDate() {
   const value = new Intl.DateTimeFormat('vi-VN', {
     weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
@@ -182,6 +190,8 @@ export async function renderWarehouseDashboardPage(root, auth) {
   };
 
   const renderReceiptDetail = (item) => {
+    const lines = item.items || item.lines || [];
+    const totalCost = item.totalCost ?? item.totalAmount ?? 0;
     detailEl.hidden = false;
     detailEl.innerHTML = `
       <div class="invoice-detail__heading">
@@ -190,7 +200,7 @@ export async function renderWarehouseDashboardPage(root, auth) {
           <h3>${escapeHtml(item.receiptCode)} — ${escapeHtml(item.supplierName)}</h3>
         </div>
         <div style="display:flex;align-items:center;gap:12px;">
-          <strong>${formatCurrency(item.totalAmount)}</strong>
+          <strong>${formatCurrency(totalCost)}</strong>
           ${item.status === 'PENDING' ? `
             <button class="button button--primary" type="button" data-dash-confirm-receipt="${item.id}">
               Xác nhận nhập kho & Cộng tồn
@@ -217,7 +227,7 @@ export async function renderWarehouseDashboardPage(root, auth) {
             </tr>
           </thead>
           <tbody>
-            ${(item.lines || []).map((line) => `
+            ${lines.map((line) => `
               <tr>
                 <td><strong>${escapeHtml(line.productCode)}</strong></td>
                 <td>${escapeHtml(line.productName)}</td>
@@ -238,12 +248,16 @@ export async function renderWarehouseDashboardPage(root, auth) {
       await verifyWarehouseAccess();
       const data = await getWarehouseDashboard();
 
-      root.querySelector('#kpi-wh-inbound-amount').textContent = formatCurrency(data.todayInboundAmount || 0);
-      root.querySelector('#kpi-wh-confirmed-today').textContent = `${Number(data.todayConfirmedReceiptCount || 0).toLocaleString('vi-VN')} phiếu nhập đã xác nhận trong ngày`;
+      const importCostToday = data.confirmedImportCostToday ?? data.todayInboundAmount ?? 0;
+      const confirmedToday = data.confirmedReceiptCountToday ?? data.todayConfirmedReceiptCount ?? 0;
+      const activeProducts = data.totalActiveProducts ?? data.totalProducts ?? 0;
+
+      root.querySelector('#kpi-wh-inbound-amount').textContent = formatCurrency(importCostToday);
+      root.querySelector('#kpi-wh-confirmed-today').textContent = `${Number(confirmedToday).toLocaleString('vi-VN')} phiếu nhập đã xác nhận trong ngày`;
       root.querySelector('#kpi-wh-pending-receipts').textContent = Number(data.pendingReceiptCount || 0).toLocaleString('vi-VN');
       root.querySelector('#kpi-wh-low-stock').textContent = `${Number(data.lowStockCount || 0).toLocaleString('vi-VN')} SP (<= 10)`;
       root.querySelector('#kpi-wh-out-of-stock').textContent = `${Number(data.outOfStockCount || 0).toLocaleString('vi-VN')} mặt hàng đã hết hàng (Tồn = 0)`;
-      root.querySelector('#kpi-wh-active-products').textContent = Number(data.totalActiveProducts || 0).toLocaleString('vi-VN');
+      root.querySelector('#kpi-wh-active-products').textContent = Number(activeProducts).toLocaleString('vi-VN');
       root.querySelector('#kpi-wh-today-tx').textContent = Number(data.todayTransactionCount || 0).toLocaleString('vi-VN');
       root.querySelector('#kpi-wh-suppliers').textContent = Number(data.activeSupplierCount || 0).toLocaleString('vi-VN');
 
@@ -254,7 +268,7 @@ export async function renderWarehouseDashboardPage(root, auth) {
           <td>${escapeHtml(r.supplierName)} <small>(${escapeHtml(r.supplierCode || '')})</small></td>
           <td>${formatDateTime(r.receiptDate)}</td>
           <td>${escapeHtml(r.createdBy || '—')}</td>
-          <td><strong>${formatCurrency(r.totalAmount)}</strong></td>
+          <td><strong>${formatCurrency(r.totalCost ?? r.totalAmount ?? 0)}</strong></td>
           <td>${receiptStatusBadge(r.status)}</td>
           <td class="table-actions">
             <button class="table-action" type="button" data-dash-view-receipt="${r.id}">Chi tiết</button>
@@ -267,18 +281,20 @@ export async function renderWarehouseDashboardPage(root, auth) {
 
       const txs = data.recentTransactions || [];
       txTbody.innerHTML = txs.length ? txs.map((tx) => {
-        const sign = tx.transactionType === 'INBOUND' ? `+${tx.quantity}`
-          : (tx.transactionType === 'OUTBOUND' || tx.transactionType === 'SALE') ? `-${tx.quantity}`
-            : `±${tx.quantity}`;
+        const change = Number(tx.quantityChange ?? tx.quantity ?? 0);
+        const sign = change > 0 ? `+${change}` : String(change);
+        const stockTransition = (tx.quantityBefore !== undefined && tx.quantityAfter !== undefined)
+          ? `<br><small>Tồn: ${tx.quantityBefore} → ${tx.quantityAfter}</small>`
+          : '';
         return `
           <tr>
             <td>${formatDateTime(tx.transactionDate)}</td>
             <td><span class="data-status ${txTypeClass(tx.transactionType)}">${escapeHtml(txTypeLabel(tx.transactionType))}</span></td>
             <td><strong>${escapeHtml(tx.productCode)}</strong> — ${escapeHtml(tx.productName)}</td>
-            <td><strong>${escapeHtml(sign)}</strong></td>
-            <td>${escapeHtml(tx.referenceType || '—')}${tx.referenceCode ? ` #${escapeHtml(tx.referenceCode)}` : ''}</td>
+            <td><strong>${escapeHtml(sign)}</strong>${stockTransition}</td>
+            <td>${escapeHtml(formatReference(tx))}</td>
             <td>${escapeHtml(tx.createdBy || '—')}</td>
-            <td>${escapeHtml(tx.note || '—')}</td>
+            <td>${escapeHtml(tx.reason || tx.note || '—')}</td>
           </tr>
         `;
       }).join('') : '<tr><td class="empty-cell" colspan="7">Chưa có giao dịch biến động tồn kho nào.</td></tr>';

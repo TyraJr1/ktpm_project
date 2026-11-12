@@ -57,7 +57,7 @@ public class WarehouseServiceImpl implements WarehouseService {
     public static final String TX_TYPE_ADJUSTMENT = "ADJUSTMENT";
     public static final String TX_TYPE_SALE = "SALE";
 
-    private static final int LOW_STOCK_THRESHOLD = 5;
+    private static final int LOW_STOCK_THRESHOLD = 10;
     private static final Set<String> ALLOWED_ENTITY_STATUSES = Set.of("ACTIVE", "INACTIVE");
     private static final Set<String> ALLOWED_RECEIPT_STATUSES = Set.of(RECEIPT_STATUS_PENDING, RECEIPT_STATUS_CONFIRMED);
     private static final Set<String> ALLOWED_TX_TYPES = Set.of(
@@ -96,7 +96,9 @@ public class WarehouseServiceImpl implements WarehouseService {
         LocalDateTime endOfToday = today.atTime(LocalTime.MAX);
 
         long totalProducts = productRepository.count();
+        long totalActiveProducts = productRepository.countByStatus(STATUS_ACTIVE);
         long lowStockCount = productRepository.countByStockQuantityLessThanEqual(LOW_STOCK_THRESHOLD);
+        long outOfStockCount = productRepository.countByStockQuantityLessThanEqual(0);
         long pendingReceiptCount = purchaseReceiptRepository.countByStatus(RECEIPT_STATUS_PENDING);
         long confirmedReceiptCountToday = purchaseReceiptRepository.countByStatusAndReceiptDateBetween(
                 RECEIPT_STATUS_CONFIRMED, startOfToday, endOfToday
@@ -110,6 +112,7 @@ public class WarehouseServiceImpl implements WarehouseService {
         long todayTransactionCount = stockTransactionRepository.countByTransactionDateBetween(
                 startOfToday, endOfToday
         );
+        long activeSupplierCount = supplierRepository.countByStatus(STATUS_ACTIVE);
 
         List<PurchaseReceiptSummaryResponse> recentReceipts = purchaseReceiptRepository.search(
                         null, null, null, null, null,
@@ -127,11 +130,14 @@ public class WarehouseServiceImpl implements WarehouseService {
 
         return new WarehouseDashboardResponse(
                 totalProducts,
+                totalActiveProducts,
                 lowStockCount,
+                outOfStockCount,
                 pendingReceiptCount,
                 confirmedReceiptCountToday,
                 confirmedImportCostToday,
                 todayTransactionCount,
+                activeSupplierCount,
                 recentReceipts,
                 recentTransactions
         );
@@ -280,6 +286,7 @@ public class WarehouseServiceImpl implements WarehouseService {
             User staff,
             LocalDateTime now
     ) {
+        BigDecimal totalCost = BigDecimal.ZERO;
         for (PurchaseReceiptDetail detail : details) {
             if (detail.getQuantity() == null || detail.getQuantity() <= 0) {
                 throw new BusinessRuleException("Tất cả số lượng nhập trong phiếu phải lớn hơn 0.");
@@ -288,6 +295,15 @@ public class WarehouseServiceImpl implements WarehouseService {
             if (product == null) {
                 throw new ResourceNotFoundException("Sản phẩm trong phiếu nhập không tồn tại.");
             }
+            BigDecimal lineTotal = detail.getLineTotal();
+            if (lineTotal == null && detail.getPurchasePrice() != null) {
+                lineTotal = detail.getPurchasePrice().multiply(BigDecimal.valueOf(detail.getQuantity()));
+                detail.setLineTotal(lineTotal);
+            }
+            if (lineTotal != null) {
+                totalCost = totalCost.add(lineTotal);
+            }
+
             int stockBefore = product.getStockQuantity() == null ? 0 : product.getStockQuantity();
             int stockAfter = stockBefore + detail.getQuantity();
 
@@ -309,6 +325,8 @@ public class WarehouseServiceImpl implements WarehouseService {
             stockTransactionRepository.save(stockTx);
         }
 
+        receipt.setTotalCost(totalCost);
+        receipt.setReceiptDate(now);
         receipt.setStatus(RECEIPT_STATUS_CONFIRMED);
         purchaseReceiptRepository.save(receipt);
     }

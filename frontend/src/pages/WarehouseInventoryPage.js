@@ -376,8 +376,9 @@ export async function renderWarehouseInventoryPage(root, auth) {
         quantity: Number(outboundQtyInput.value),
         reason: outboundForm.elements.reason.value.trim(),
       });
+      const exportedQty = Math.abs(Number(tx.quantityChange ?? tx.quantity ?? 0));
       outboundForm.hidden = true;
-      showSuccess(`Đã xuất kho ${tx.quantity} sản phẩm "${tx.productName}" (${tx.productCode}) và ghi nhật ký OUTBOUND thành công.`);
+      showSuccess(`Đã xuất kho ${exportedQty} sản phẩm "${tx.productName}" (${tx.productCode}), tồn kho: ${tx.quantityBefore} → ${tx.quantityAfter}, và ghi nhật ký OUTBOUND thành công.`);
       await loadProducts();
     } catch (error) {
       showError(error);
@@ -397,8 +398,9 @@ export async function renderWarehouseInventoryPage(root, auth) {
         actualQuantity: Number(adjustActualInput.value),
         reason: adjustForm.elements.reason.value.trim(),
       });
+      const diffSign = Number(tx.quantityChange) > 0 ? `+${tx.quantityChange}` : String(tx.quantityChange);
       adjustForm.hidden = true;
-      showSuccess(`Đã kiểm kê & điều chỉnh tồn kho cho "${tx.productName}" (${tx.productCode}): ${tx.note}`);
+      showSuccess(`Đã kiểm kê & điều chỉnh tồn kho cho "${tx.productName}" (${tx.productCode}): Tồn ${tx.quantityBefore} → ${tx.quantityAfter} (${diffSign}). Lý do: ${tx.reason || tx.note || ''}`);
       await loadProducts();
     } catch (error) {
       showError(error);

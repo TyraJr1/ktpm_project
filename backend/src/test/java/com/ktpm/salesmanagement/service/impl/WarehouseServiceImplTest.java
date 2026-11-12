@@ -205,6 +205,36 @@ class WarehouseServiceImplTest {
         assertEquals(8, product.getStockQuantity());
     }
 
+    @Test
+    void getDashboardPopulatesAllKpisAccurateCountsAndAmounts() {
+        when(productRepository.count()).thenReturn(25L);
+        when(productRepository.countByStatus("ACTIVE")).thenReturn(22L);
+        when(productRepository.countByStockQuantityLessThanEqual(10)).thenReturn(4L);
+        when(productRepository.countByStockQuantityLessThanEqual(0)).thenReturn(1L);
+        when(purchaseReceiptRepository.countByStatus("PENDING")).thenReturn(2L);
+        when(purchaseReceiptRepository.countByStatusAndReceiptDateBetween(any(), any(), any())).thenReturn(3L);
+        when(purchaseReceiptRepository.sumTotalCostByStatusAndDateRange(any(), any(), any()))
+                .thenReturn(new BigDecimal("1450000"));
+        when(stockTransactionRepository.countByTransactionDateBetween(any(), any())).thenReturn(9L);
+        when(supplierRepository.countByStatus("ACTIVE")).thenReturn(6L);
+        when(purchaseReceiptRepository.search(any(), any(), any(), any(), any(), any()))
+                .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of()));
+        when(stockTransactionRepository.search(any(), any(), any(), any(), any(), any()))
+                .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of()));
+
+        var dashboard = service.getDashboard();
+
+        assertEquals(25L, dashboard.totalProducts());
+        assertEquals(22L, dashboard.totalActiveProducts());
+        assertEquals(4L, dashboard.lowStockCount());
+        assertEquals(1L, dashboard.outOfStockCount());
+        assertEquals(2L, dashboard.pendingReceiptCount());
+        assertEquals(3L, dashboard.confirmedReceiptCountToday());
+        assertEquals(new BigDecimal("1450000"), dashboard.confirmedImportCostToday());
+        assertEquals(9L, dashboard.todayTransactionCount());
+        assertEquals(6L, dashboard.activeSupplierCount());
+    }
+
     private User warehouseStaff() {
         User u = new User();
         u.setId(3L);

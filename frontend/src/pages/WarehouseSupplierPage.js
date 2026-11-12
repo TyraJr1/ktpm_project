@@ -152,7 +152,7 @@ export async function renderWarehouseSupplierPage(root, auth) {
                   <td><strong>${escapeHtml(r.receiptCode)}</strong></td>
                   <td>${formatDateTime(r.receiptDate)}</td>
                   <td>${escapeHtml(r.createdBy || '—')}</td>
-                  <td><strong>${formatCurrency(r.totalAmount)}</strong></td>
+                  <td><strong>${formatCurrency(r.totalCost ?? r.totalAmount ?? 0)}</strong></td>
                   <td>
                     <span class="data-status ${r.status === 'CONFIRMED' ? 'is-active' : 'is-inactive'}">
                       ${escapeHtml(r.status)}

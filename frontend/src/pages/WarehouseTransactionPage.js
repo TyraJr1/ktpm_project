@@ -142,12 +142,24 @@ export async function renderWarehouseTransactionPage(root, auth) {
       countEl.textContent = `${(data.totalElements ?? list.length).toLocaleString('vi-VN')} bản ghi biến động tồn kho`;
 
       rowsEl.innerHTML = list.length ? list.map((tx) => {
-        const sign = tx.transactionType === 'INBOUND' ? `+${tx.quantity}`
-          : (tx.transactionType === 'OUTBOUND' || tx.transactionType === 'SALE') ? `-${tx.quantity}`
-            : `±${tx.quantity}`;
-        const color = tx.transactionType === 'INBOUND' ? '#087b72'
-          : (tx.transactionType === 'OUTBOUND' || tx.transactionType === 'SALE') ? '#b42318'
+        const change = Number(tx.quantityChange ?? tx.quantity ?? 0);
+        const sign = change > 0 ? `+${change}` : String(change);
+        const color = change > 0 ? '#087b72'
+          : change < 0 ? '#b42318'
             : '#4338ca';
+        const stockTransition = (tx.quantityBefore !== undefined && tx.quantityAfter !== undefined)
+          ? `<br><small>Tồn: ${tx.quantityBefore} → ${tx.quantityAfter}</small>`
+          : '';
+        let refHtml = '—';
+        if (tx.receiptCode) {
+          refHtml = `Phiếu nhập<br><small><strong>#${escapeHtml(tx.receiptCode)}</strong></small>`;
+        } else if (tx.orderCode) {
+          refHtml = `Đơn bán hàng<br><small><strong>#${escapeHtml(tx.orderCode)}</strong></small>`;
+        } else if (tx.transactionType === 'OUTBOUND') {
+          refHtml = 'Xuất kho nội bộ';
+        } else if (tx.transactionType === 'ADJUSTMENT') {
+          refHtml = 'Kiểm kê kho';
+        }
         return `
           <tr>
             <td><strong>#${tx.id}</strong></td>
@@ -155,13 +167,10 @@ export async function renderWarehouseTransactionPage(root, auth) {
             <td>${txTypeBadge(tx.transactionType)}</td>
             <td><strong>${escapeHtml(tx.productCode)}</strong></td>
             <td>${escapeHtml(tx.productName)}</td>
-            <td><strong style="color:${color};font-size:0.9rem;">${escapeHtml(sign)}</strong></td>
-            <td>
-              ${escapeHtml(tx.referenceType || '—')}
-              ${tx.referenceCode ? `<br><small>Mã: #${escapeHtml(tx.referenceCode)}</small>` : ''}
-            </td>
+            <td><strong style="color:${color};font-size:0.9rem;">${escapeHtml(sign)}</strong>${stockTransition}</td>
+            <td>${refHtml}</td>
             <td>${escapeHtml(tx.createdBy || '—')}</td>
-            <td>${escapeHtml(tx.note || '—')}</td>
+            <td>${escapeHtml(tx.reason || tx.note || '—')}</td>
           </tr>
         `;
       }).join('') : '<tr><td class="empty-cell" colspan="9">Không có giao dịch biến động phù hợp với bộ lọc.</td></tr>';

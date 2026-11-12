@@ -11,6 +11,8 @@ import java.util.Optional;
 public interface SupplierRepository extends JpaRepository<Supplier, Long> {
     Optional<Supplier> findBySupplierCodeIgnoreCase(String supplierCode);
 
+    long countByStatus(String status);
+
     @Query("""
             select s from Supplier s
             where (:query is null or lower(s.supplierCode) like lower(concat('%', :query, '%'))
